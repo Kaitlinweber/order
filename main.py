@@ -1,15 +1,20 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
 import pandas as pd
+import numpy as np
 
 root = tk.Tk()
-root.title("Orderbevestiging Tierra")
+root.title("Orderbevestiging Tierra Outdoor")
 
 frame = tk.Frame(root)
 frame.pack()
 
+#General informatuon frame
+general_frame = tk.LabelFrame(frame, borderwidth=0, highlightthickness=0)
+general_frame.grid(row=0, column=0, padx=20, pady=20)
+
 #Customer information labels
-customer_info_frame = tk.LabelFrame(frame, text="Klant informatie")
+customer_info_frame = tk.LabelFrame(general_frame, text="Klant informatie")
 customer_info_frame.grid(row=0, column=0, padx=20, pady=20)
 
 company_name_label = tk.Label(customer_info_frame, text="Bedrijfsnaam")
@@ -35,7 +40,7 @@ country_entry = tk.Entry(customer_info_frame)
 country_entry.grid(row=4, column=1)
 
 #Order Information 
-order_info_frame = tk.LabelFrame(frame, text="Order informatie")
+order_info_frame = tk.LabelFrame(general_frame, text="Order informatie")
 order_info_frame.grid(row=0, column=1, padx=20, pady=20)
 
 order_number_label = tk.Label(order_info_frame, text="Ordernummer")
@@ -72,7 +77,7 @@ tierra_frame.pack(fill="both", expand=1)
 no_label_frame.pack(fill="both", expand=1)
 shop_in_frame.pack(fill="both", expand=1)
 
-excel_notebook.add(tierra_frame, text="Tierra")
+excel_notebook.add(tierra_frame, text="Tierra Outdoor")
 excel_notebook.add(no_label_frame, text="No-Label")
 excel_notebook.add(shop_in_frame, text="Shop in Shop")
 
@@ -83,20 +88,33 @@ def upload_file():
     excel_file = filedialog.askopenfilename(filetypes=[('xlsx files', '*.xlsx'), ('xls files', '*.xls')]) #Posibility initial directory for opening
     if excel_file:
         try:
-            excel_file = r"{}".format(excel_file)
-            df = pd.read_excel(excel_file) #TODO: add sheetname=None for all the sheets
+            excel_file = r"{}".format(excel_file) #TODO: funtion for removing unnamed
+            df = pd.read_excel(excel_file) #TODO: add sheetname=None for all the sheets  split sheet funtion in other python file --> vervangen voor deze line 
+            df = df[df.filter(regex='^(?!Unnamed)').columns]
         except ValueError:
             error_label.config(text="File couldn't be openend")
         except FileNotFoundError:
             error_label.config(text="File couldn't be found")
-#     #clear old treeview
-#     clear_tree()
+        
+    #clear old treeview
+    clear_tree()
 
-#     #set up new treeview
-#     excel_tree["column"] = list(df.columns)
+    #set up new treeview   #TODO: funtion with variable excel_tree --> tierra tree - no label tree - shop in tree 
+    excel_tree["column"] = list(df.columns)
+    excel_tree["show"] = "headings"
 
-# def clear_tree():
-#     excel_tree.delete(*excel_tree.get_children())
+    for column in excel_tree["column"]:
+        excel_tree.heading(column, text=column)
+
+    #put data in treeview
+    df_rows = df.to_numpy().tolist()
+    for row in df_rows:
+        excel_tree.insert("", "end", values=row)
+    
+    excel_tree.pack()
+
+def clear_tree():
+    excel_tree.delete(*excel_tree.get_children())
 
 error_label = tk.Label(root, text='')
 error_label.pack(pady=20)
