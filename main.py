@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 import pandas as pd
 import numpy as np
+import process_data
 
 root = tk.Tk()
 root.title("Orderbevestiging Tierra Outdoor")
@@ -82,39 +83,56 @@ excel_notebook.add(no_label_frame, text="No-Label")
 excel_notebook.add(shop_in_frame, text="Shop in Shop")
 
 #Create treeview
-excel_tree = ttk.Treeview(tierra_frame) #TODO: add scroll bar and create function for this part
+tierra_tree = ttk.Treeview(tierra_frame) #TODO: add scroll bar 
+no_label_tree = ttk.Treeview(no_label_frame)
+shop_in_tree = ttk.Treeview(shop_in_frame)
+
 
 def upload_file():
     excel_file = filedialog.askopenfilename(filetypes=[('xlsx files', '*.xlsx'), ('xls files', '*.xls')]) #Posibility initial directory for opening
     if excel_file:
         try:
-            excel_file = r"{}".format(excel_file) #TODO: funtion for removing unnamed
-            df = pd.read_excel(excel_file) #TODO: add sheetname=None for all the sheets  split sheet funtion in other python file --> vervangen voor deze line 
-            df = df[df.filter(regex='^(?!Unnamed)').columns]
+            excel_file = r"{}".format(excel_file) 
+            df_tierra, df_no_label, df_shop_in = process_data.extract_product(excel_file)
         except ValueError:
             error_label.config(text="File couldn't be openend")
         except FileNotFoundError:
             error_label.config(text="File couldn't be found")
         
     #clear old treeview
-    clear_tree()
+    clear_tree(tierra_tree)
+    clear_tree(no_label_tree)
+    clear_tree(shop_in_tree)
 
-    #set up new treeview   #TODO: funtion with variable excel_tree --> tierra tree - no label tree - shop in tree 
+    #set up tree
+    set_up_treeview(tierra_tree, df_tierra)
+    set_up_treeview(no_label_tree, df_no_label)
+    set_up_treeview(shop_in_tree, df_shop_in)
+
+
+def clear_tree(excel_tree):
+    excel_tree.delete(*excel_tree.get_children())
+    
+
+def set_up_treeview(excel_tree, df):
     excel_tree["column"] = list(df.columns)
     excel_tree["show"] = "headings"
 
     for column in excel_tree["column"]:
         excel_tree.heading(column, text=column)
-
+       
     #put data in treeview
     df_rows = df.to_numpy().tolist()
     for row in df_rows:
         excel_tree.insert("", "end", values=row)
-    
+
     excel_tree.pack()
 
-def clear_tree():
-    excel_tree.delete(*excel_tree.get_children())
+    #set tree style
+    style = ttk.Style()
+    style.configure("Treeview.Heading", rowheight=50)
+    style.configure("Treeview", rowheight=25)
+    
 
 error_label = tk.Label(root, text='')
 error_label.pack(pady=20)
