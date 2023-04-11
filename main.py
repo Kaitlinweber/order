@@ -67,12 +67,12 @@ excel_button=tk.Button(upload_excel_frame, text="Upload Excel bestand", width=20
 excel_button.grid(row=0, column=0)
 
 #Create tabs
-excel_notebook = ttk.Notebook(upload_excel_frame, width=750, height=250)
+excel_notebook = ttk.Notebook(upload_excel_frame, width=850, height=250)
 excel_notebook.grid(row=2, column=0)
 
-tierra_frame = ttk.Frame(excel_notebook, width=750, height=200)
-no_label_frame = ttk.Frame(excel_notebook, width=750, height=200)
-shop_in_frame = ttk.Frame(excel_notebook,width=750, height=200)
+tierra_frame = ttk.Frame(excel_notebook, width=850, height=250)
+no_label_frame = ttk.Frame(excel_notebook, width=850, height=250)
+shop_in_frame = ttk.Frame(excel_notebook, width=850, height=250)
 
 tierra_frame.pack(fill="both", expand=1)
 no_label_frame.pack(fill="both", expand=1)
@@ -82,11 +82,36 @@ excel_notebook.add(tierra_frame, text="Tierra Outdoor")
 excel_notebook.add(no_label_frame, text="No-Label")
 excel_notebook.add(shop_in_frame, text="Shop in Shop")
 
-#Create treeview
-tierra_tree = ttk.Treeview(tierra_frame) #TODO: add scroll bar 
-no_label_tree = ttk.Treeview(no_label_frame)
-shop_in_tree = ttk.Treeview(shop_in_frame)
+#Create scrollbar  #TODO: class van scrollbar maken 
+scrollbary_tierra = ttk.Scrollbar(tierra_frame)
+scrollbary_tierra.pack(side="right", fill="y") 
+scrollbarx_tierra = ttk.Scrollbar(tierra_frame, orient="horizontal")
+scrollbarx_tierra.pack(side="bottom", fill="x")
 
+scrollbary_no_label = ttk.Scrollbar(no_label_frame)
+scrollbary_no_label.pack(side="right", fill="y") 
+scrollbarx_no_label = ttk.Scrollbar(no_label_frame, orient="horizontal")
+scrollbarx_no_label.pack(side="bottom", fill="x")
+
+scrollbary_shop_in = ttk.Scrollbar(shop_in_frame)
+scrollbary_shop_in.pack(side="right", fill="y") 
+scrollbarx_shop_in = ttk.Scrollbar(shop_in_frame, orient="horizontal")
+scrollbarx_shop_in.pack(side="bottom", fill="x")
+
+#Create treeview
+tierra_tree = ttk.Treeview(tierra_frame, yscrollcommand=scrollbary_tierra.set, xscrollcommand=scrollbarx_tierra.set) #TODO: add scroll bar 
+no_label_tree = ttk.Treeview(no_label_frame, yscrollcommand=scrollbary_no_label.set, xscrollcommand=scrollbarx_no_label.set)
+shop_in_tree = ttk.Treeview(shop_in_frame, yscrollcommand=scrollbary_shop_in.set, xscrollcommand=scrollbarx_shop_in.set)
+
+#Configure scrollbar
+scrollbary_tierra.config(command=tierra_tree.yview)
+scrollbarx_tierra.config(command=tierra_tree.xview)
+
+scrollbary_no_label.config(command=no_label_tree.yview)
+scrollbarx_no_label.config(command=no_label_tree.xview)
+
+scrollbary_shop_in.config(command=shop_in_tree.yview)
+scrollbarx_shop_in.config(command=shop_in_tree.xview)
 
 def upload_file():
     excel_file = filedialog.askopenfilename(filetypes=[('xlsx files', '*.xlsx'), ('xls files', '*.xls')]) #Posibility initial directory for opening
