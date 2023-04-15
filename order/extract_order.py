@@ -7,11 +7,19 @@ def extract_sheets(file_path):
         from the price list and removes unnamed columns '''
     for excel_file in file_path:
         order_list = pd.read_excel(excel_file, sheet_name=None)
-        
+        #print(type(order_list))
         tierra = order_list['Tierra Outdoor'] 
         tierra = tierra[tierra.filter(regex='^(?!Unnamed)').columns] #removes unnamed columns from tierra price list
+        tierra_total = tierra.iloc[-1]
+        tierra_total.fillna('', inplace=True)
+        #print(tierra_total)
+        tierra = tierra.drop(tierra.columns[[1, 4, 5, 7]], axis=1) #removes unwanted columns
+        tierra = tierra.dropna(subset=tierra.columns[4])
+        tierra.loc[-1] = tierra_total
+        print(tierra)
         nolabel = order_list['No-Label']
         shop_in = order_list['Shop in Shop']
+        print(type(nolabel))
     return tierra, nolabel, shop_in
 
 def tierra_product():
@@ -31,5 +39,5 @@ if __name__ == '__main__':
                         default=[], nargs='+', help='Filepath to output directory')
     args = argument_parser.parse_args()
     xlsx_sheets = extract_sheets(file_path=args.input)
-    print(xlsx_sheets)
+    
  

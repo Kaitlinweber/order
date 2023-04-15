@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
-import pandas as pd
-import numpy as np
+#import pandas as pd
+# import numpy as np
 import process_data
 
 root = tk.Tk()
@@ -151,6 +151,7 @@ def set_up_treeview(excel_tree, df):
     for row in df_rows:
         excel_tree.insert("", "end", values=row)
 
+    #TODO: change color : last row (total)
     excel_tree.pack()
 
     #set tree style
@@ -158,9 +159,34 @@ def set_up_treeview(excel_tree, df):
     style.configure("Treeview.Heading", rowheight=50)
     style.configure("Treeview", rowheight=25)
     
+    
+
 
 error_label = tk.Label(root, text='')
 error_label.pack(pady=20)
 
+#Function for number
+def number():
+    try:
+        float(general_discount.get())
+        test_answer.config(text="")
+    except ValueError:
+        test_answer.config(text="De korting moet een getal zijn, \n decimaal aangeven met punt")
+
+#Create discount frame 
+discount_frame = tk.LabelFrame(frame, text="Korting")
+discount_frame.grid(row=4, column=0, padx=20, pady=20)
+
+general_discount_label = tk.Label(discount_frame, text="Algemene korting")
+general_discount_label.grid(row=0, column=0)
+
+general_discount = tk.Entry(discount_frame)
+general_discount.grid(row=0, column=1)
+
+discount_button = tk.Button(discount_frame, text="Update prijslijst met korting", command=number)
+discount_button.grid(row=0, column=2)
+
+test_answer = tk.Label(discount_frame, text='')
+test_answer.grid(row=1, column=1)
 
 root.mainloop()
