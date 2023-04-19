@@ -1,7 +1,6 @@
 import tkinter as tk
-from tkinter import ttk, filedialog
-#import pandas as pd
-# import numpy as np
+from tkinter import ttk, filedialog, messagebox
+import pandas as pd
 import process_data
 
 root = tk.Tk()
@@ -63,8 +62,12 @@ date_delivery_entry.grid(row=2, column=1)
 upload_excel_frame = tk.LabelFrame(frame, text="Prijslijst")
 upload_excel_frame.grid(row=3, column=0, padx=20, pady=20)
 
-excel_button=tk.Button(upload_excel_frame, text="Upload Excel bestand", width=20, command=lambda:upload_file())
+input_frame = tk.LabelFrame(upload_excel_frame,  borderwidth=0, highlightthickness=0)
+input_frame.grid(row=0, column=0)
+
+excel_button=tk.Button(input_frame, text="Upload Excel bestand", width=20, command=lambda:upload_file())
 excel_button.grid(row=0, column=0)
+
 
 #Create tabs
 excel_notebook = ttk.Notebook(upload_excel_frame, width=850, height=250)
@@ -99,7 +102,7 @@ scrollbarx_shop_in = ttk.Scrollbar(shop_in_frame, orient="horizontal")
 scrollbarx_shop_in.pack(side="bottom", fill="x")
 
 #Create treeview
-tierra_tree = ttk.Treeview(tierra_frame, yscrollcommand=scrollbary_tierra.set, xscrollcommand=scrollbarx_tierra.set) #TODO: add scroll bar 
+tierra_tree = ttk.Treeview(tierra_frame, yscrollcommand=scrollbary_tierra.set, xscrollcommand=scrollbarx_tierra.set) 
 no_label_tree = ttk.Treeview(no_label_frame, yscrollcommand=scrollbary_no_label.set, xscrollcommand=scrollbarx_no_label.set)
 shop_in_tree = ttk.Treeview(shop_in_frame, yscrollcommand=scrollbary_shop_in.set, xscrollcommand=scrollbarx_shop_in.set)
 
@@ -140,7 +143,7 @@ def clear_tree(excel_tree):
     
 
 def set_up_treeview(excel_tree, df):
-    excel_tree["column"] = list(df.columns)
+    excel_tree["column"] = list(df.columns) + ["Aangepaste Korting"]
     excel_tree["show"] = "headings"
 
     for column in excel_tree["column"]:
@@ -149,29 +152,39 @@ def set_up_treeview(excel_tree, df):
     #put data in treeview
     df_rows = df.to_numpy().tolist()
     for row in df_rows:
+        row.append("")
         excel_tree.insert("", "end", values=row)
+
 
     #TODO: change color : last row (total)
     excel_tree.pack()
 
-    #set tree style
+    #set tree 
     style = ttk.Style()
     style.configure("Treeview.Heading", rowheight=50)
     style.configure("Treeview", rowheight=25)
-    
-    
-
+  
 
 error_label = tk.Label(root, text='')
 error_label.pack(pady=20)
 
 #Function for number
-def number():
+def number(checked_number):
     try:
-        float(general_discount.get())
-        test_answer.config(text="")
+        float(checked_number.get())
+        return True
     except ValueError:
-        test_answer.config(text="De korting moet een getal zijn, \n decimaal aangeven met punt")
+        #TODO: navragen soort error message - zie onderstaand
+        #error_popup = messagebox.showerror(title="Ingevoerde korting", message="De korting moet \n een getal zijn, \n waarbij decimaal is \n aangeven met een punt")
+        error_popup = tk.Toplevel(padx=10, pady=10)
+        error_label = tk.Label(error_popup, text="De korting moet \n een getal zijn \n en decimaal wordt \n aangeven met een punt")
+        error_label.pack()
+        ok_button = tk.Button(error_popup, text="OK", command=error_popup.destroy)
+        ok_button.pack()
+        checked_number.delete(0, tk.END)
+        error_popup.focus_set()
+        error_popup.geometry("+%d+%d" % (root.winfo_pointerx(), root.winfo_pointery()))
+
 
 #Create discount frame 
 discount_frame = tk.LabelFrame(frame, text="Korting")
@@ -181,12 +194,69 @@ general_discount_label = tk.Label(discount_frame, text="Algemene korting")
 general_discount_label.grid(row=0, column=0)
 
 general_discount = tk.Entry(discount_frame)
-general_discount.grid(row=0, column=1)
+general_discount.grid(row=1, column=0)
 
-discount_button = tk.Button(discount_frame, text="Update prijslijst met korting", command=number)
-discount_button.grid(row=0, column=2)
 
-test_answer = tk.Label(discount_frame, text='')
-test_answer.grid(row=1, column=1)
+#Update button 
+discount_button = tk.Button(discount_frame, text="Update prijslijst met korting", command=lambda: number(general_discount))
+discount_button.grid(row=1, column=2)
+
+
+def set_value_selected_rows(tree, column):
+    selected_items = tree.selection()
+    
+    # Create pop up frame
+    popup = tk.Toplevel()
+        
+    # create label and entry for pop up 
+    label = tk.Label(popup, text="Voer waarde in:")
+    entry = tk.Entry(popup)
+        
+    # Place label and entry in pop up
+    label.pack()
+    entry.pack()
+        
+    # OK button for getting value 
+    def ok_pressed(): #TODO: change ok pressed zodat het pop up venster pas wordt gesloten wanneer er een juiste waarde is ingevoerd
+        number(entry)
+        value = entry.get()
+        for item in selected_items:
+            tree.set(item, column, value)
+        popup.destroy()
+    
+    #TODO: change ok pressed zodat het pop up venster pas wordt gesloten wanneer er een juiste waarde is ingevoerd
+ 
+    ok_button = tk.Button(popup, text="OK", command=ok_pressed)
+    ok_button.pack()
+        
+    # Place pop up vester at mouse 
+    popup.focus_set()
+    popup.geometry("+%d+%d" % (root.winfo_pointerx(), root.winfo_pointery()))
+
+def delete_value_selected_column(tree, column):
+    # Get selected rows
+    selected_item = tree.selection()
+
+    # Loop door de geselecteerde rijen
+    for item in selected_item:
+        # Haal de waarde van de geselecteerde kolom op
+        value = tree.item(item, "values")[tree["columns"].index(column)]
+
+        # Verwijder de waarde van de geselecteerde kolom
+        tree.set(item, column, "")
+
+        
+def show_popup_menu(event, tree): 
+    # Maak een pop-up menu
+    menu = tk.Menu(tree, tearoff=0)
+    menu.add_command(label="Korting aanpassen", command=lambda: set_value_selected_rows(tree, "Aangepaste Korting"))
+    menu.add_command(label="Korting verwijderen", command=lambda: delete_value_selected_column(tree, "Aangepaste Korting"))
+    # Open het pop-up menu op de positie van de muisklik
+    menu.post(event.x_root, event.y_root)
+        
+# Bind de functie show_popup_menu aan de rechter muisknop
+tierra_tree.bind("<Button-2>", lambda event: show_popup_menu(event, tierra_tree))
+no_label_tree.bind("<Button-2>", lambda event: show_popup_menu(event, no_label_tree))
+shop_in_tree.bind("<Button-2>", lambda event: show_popup_menu(event, shop_in_tree))
 
 root.mainloop()
